@@ -23,14 +23,14 @@ BPM helps you know if your next track will speed up or slow down the tempo from 
 
 By having the key data from djay-pro-keys-to-apple-music you can sequence a playlist in a way that builds naturally and sounds amazing, every time.
 
-Once you have the all the key data for the tracks, switch your Playlist to View, as Songs in Apple Music, and reveal the BPM and Comments fields in the available columns.
+Once you have the all the key data for the tracks, switch your Apple Music Playlist to View, as Songs, and then reveal the BPM and Comments fields in the available columns.
 
 Start with your favourite first track for the playlist, and then use the [Camelot wheel](https://dj.studio/blog/camelot-wheel) to sequence the rest of the playlist with intention.
 
-I guarantee your playlists have never sounded better!
+I guarantee your playlists will sound better than ever!
 
 ## What would a DJ use this for?
-If your day-to-day music discovery service is Apple Music and you make Playlists in Apple Music based on genre, theme, sequences of songs, or upcoming mixes, now you can organize by key in Apple Music instead of having to jump into Djay Pro to manage all your playlists there.
+If your day-to-day music discovery service is Apple Music and you make Playlists in Apple Music based on genre, theme, sequences of songs, or upcoming mixes, now you can organize by key in Apple Music instead of having to jump into Djay Pro to manage all your playlists.
 
 # Workflow for djay-pro-keys-to-apple-music
 
