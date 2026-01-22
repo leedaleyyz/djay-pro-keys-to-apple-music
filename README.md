@@ -1,5 +1,5 @@
 # Introducing djay-pro-keys-to-apple-music
-A python script to set BPM and Key Values to tracks in Apple Music.
+A python script to set BPM and Key Values to tracks in Apple Music so you can easily create harmonic playlists in Apple Music.
 
 ## Why do you need this?
 Because Apple Music has a blank BPM field as a default and no Keys for songs (you can use the Comments field to include Key data).
