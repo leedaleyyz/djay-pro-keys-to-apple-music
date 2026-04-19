@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-# djay_playlist_to_apple_music.py
+# NOTE:
+# This version includes an updated parse_media_item_analyzed_data() function.
+# It now prioritizes a newer djay blob encoding where the key byte appears
+# immediately after the 0x0F tag following the BPM marker.
+# Existing fallback parsing logic for older blob layouts is preserved.
+
+# djay_playlist_to_apple_music_overwrite_verified_report_fallback_v2.py
 #
-# djay -> Apple Music BPM + Comments sync (playlist-scoped), using VERIFIED key mapping (Djay Pro Index to Camelot).
+# djay -> Apple Music BPM + Comments sync (playlist-scoped), using VERIFIED key mapping.
 #
 # Reads BPM/key from:
 #   1) secondaryIndex_mediaItemIndex (preferred)
@@ -93,26 +99,27 @@ def tracks_in_playlist(con: sqlite3.Connection, playlist_uuid: str) -> List[str]
 
 def parse_media_item_analyzed_data(blob: bytes) -> Tuple[Optional[float], Optional[int]]:
     """
-    Parse bpm (float32 LE) and keySignatureIndex (0..23) from database2.mediaItemAnalyzedData blob.
+    Parse bpm (float32 LE) and keySignatureIndex (0..23) from database2.mediaItemAnalyzedData blobs.
 
-    djay appears to use a compact TLV-like encoding:
-      <value bytes> 0x08 <fieldName> 0x00 <type/value bytes> ...
+    CHANGES:
+    1) NEW PRIMARY RULE:
+       Some newer djay DB blobs encode the key immediately after the 0x0F tag that follows
+       the BPM marker, like:
+           <float32 bpm> 08 'bpm' 00 0F <KEY_BYTE> 08 'keySignatureIndex' 00
+       We now check this pattern first.
 
-    For keySignatureIndex we have observed at least two encodings:
-      A) ... 0x0F <keyByte> 0x08 "keySignatureIndex" 0x00 ...
-         (key byte is immediately BEFORE the marker, after a 0x0F tag)
-      B) ... 0x08 "keySignatureIndex" 0x00 <keyByte> 0x08 "isStraight" 0x00 ...
-         (key byte is immediately AFTER the marker)
+    2) LEGACY FALLBACKS KEPT:
+       Older blobs may store the key:
+       - immediately AFTER the keySignatureIndex marker
+       - immediately BEFORE the keySignatureIndex marker
+       - after a nearby 0x0F tag close to the keySignatureIndex marker
 
-    This parser tries, in order:
-      1) byte immediately AFTER the marker (if 0..23)
-      2) byte immediately BEFORE the marker (if 0..23)
-      3) scan a small window before the marker for 0x0F and use the following byte (if 0..23)
+    This unified parser handles all known variants encountered in your djay databases.
     """
     bpm: Optional[float] = None
     key_sig: Optional[int] = None
 
-    # BPM: float32 immediately BEFORE marker: 0x08 'bpm' 0x00
+    # Parse BPM from the 4 bytes immediately before the BPM marker.
     p = blob.find(BPM_MARKER)
     if p >= 4:
         try:
@@ -120,31 +127,55 @@ def parse_media_item_analyzed_data(blob: bytes) -> Tuple[Optional[float], Option
         except Exception:
             bpm = None
 
-    ks = blob.find(KEYSIG_MARKER)
-    if ks >= 0:
-        after = ks + len(KEYSIG_MARKER)
-        if after < len(blob):
-            cand_after = blob[after]
-            if 0 <= cand_after <= 23:
-                key_sig = int(cand_after)
+        # ------------------------------------------------------------------
+        # CHANGE 1: NEW PRIMARY KEY EXTRACTION RULE
+        #
+        # Newer blobs often look like:
+        #   <float32 bpm> 08 'bpm' 00 0F <KEY_BYTE> 08 'keySignatureIndex' 00
+        #
+        # So if the byte right after the BPM marker is 0x0F, the following
+        # byte is the key index we want.
+        # ------------------------------------------------------------------
+        after = p + len(BPM_MARKER)
+        if after + 1 < len(blob) and blob[after] == 0x0F:
+            candidate = blob[after + 1]
+            if 0 <= candidate <= 23:
+                key_sig = int(candidate)
+
+    # ----------------------------------------------------------------------
+    # CHANGE 2: LEGACY FALLBACKS
+    #
+    # Only try these older parsing patterns if the new primary rule above
+    # did not find a valid key.
+    # ----------------------------------------------------------------------
+    if key_sig is None:
+        ks = blob.find(KEYSIG_MARKER)
+        if ks >= 0:
+            # Fallback A: byte immediately AFTER the keySignatureIndex marker
+            after_ks = ks + len(KEYSIG_MARKER)
+            if after_ks < len(blob):
+                candidate = blob[after_ks]
+                if 0 <= candidate <= 23:
+                    key_sig = int(candidate)
 
         if key_sig is None and ks >= 1:
-            cand_before = blob[ks - 1]
-            if 0 <= cand_before <= 23:
-                key_sig = int(cand_before)
+            # Fallback B: byte immediately BEFORE the keySignatureIndex marker
+            candidate = blob[ks - 1]
+            if 0 <= candidate <= 23:
+                key_sig = int(candidate)
 
-        if key_sig is None:
+        if key_sig is None and ks >= 0:
+            # Fallback C: search backwards for a nearby 0x0F tag and use the
+            # following byte if it is a plausible key index.
             start = max(0, ks - 32)
             window = blob[start:ks]
             idx = window.rfind(b"\x0f")
             if idx >= 0 and (start + idx + 1) < ks:
-                cand2 = blob[start + idx + 1]
-                if 0 <= cand2 <= 23:
-                    key_sig = int(cand2)
+                candidate = blob[start + idx + 1]
+                if 0 <= candidate <= 23:
+                    key_sig = int(candidate)
 
     return bpm, key_sig
-
-
 
 def get_bpm_keyindex(con: sqlite3.Connection, title_id: str) -> Tuple[Optional[float], Optional[int], str]:
     cur = con.cursor()
