@@ -33,25 +33,39 @@ I guarantee your playlists will sound better than ever!
 If your day-to-day music discovery service is Apple Music and you make Playlists in Apple Music based on genre, theme, sequences of songs, or upcoming mixes, now you can organize by key in Apple Music instead of having to jump into Djay Pro to manage all your playlists.
 
 # Workflow for djay-pro-keys-to-apple-music
+**Important: playlists must exist as local djay Pro playlists**
+
+This script does not read Apple Music playlists directly.
+
+It reads playlist data from djay Pro’s local MediaLibrary.db. That means any Apple Music playlist you want to process must first be copied or added into djay Pro’s own playlist library.
+
+If a playlist exists only in Apple Music, the script will not find it and may return:
+    ```Playlist not found: PLAYLIST NAME```
+
+Before running the script, confirm the playlist appears under djay Pro’s local playlists, not only under the Apple Music source inside djay.
 
 ## Djay Pro
 
-1. Connect Apple Music to Djay Pro
-2. Find Playlist in Djay Pro
-3. Analyze all songs in Playlist
-4. Add Apple Music Playlist to Djay Pro’s Playlists
+1. Connect Apple Music to djay Pro.
+2. In djay Pro, find the Apple Music playlist you want to process.
+3. Copy or add that Apple Music playlist into djay Pro’s local playlists.
+4. Open the copied djay Pro playlist.
+5. Analyze all songs in that djay Pro playlist.
+6. Confirm BPM and Key values are visible in djay Pro.
+7. Quit djay Pro, or make sure the database files are fully written before copying them.
 
 ## Finder
-1. Find Djay Pro package in Finder
+1. Find the Djay Pro package in Finder
 2. Show Package Contents
 3. Copy the three Djay Pro Database files
 4. Make a new File Folder. For example, “djay db to Apple Music”
 5. Paste the three Djay Pro Database files into your new File Folder
+6. Copy the script, "djay-pro-keys-to-apple-music.py" to this same File Folder
 
 ## Terminal (Python Script)
 
 1. Open Terminal
-2. Go to directory “djay db to Apple Music”
+2. Go to the directory with the database files and the script. ie, “djay db to Apple Music”
 3. Run djay_playlist_to_apple_music.py as follows:
     
     ```jsx
@@ -62,7 +76,7 @@ If your day-to-day music discovery service is Apple Music and you make Playlists
     ```
     
     1. Set DB filename: `MediaLibrary.db`
-    2. Select Playlist to export. Update `NAME` 
+    2. Select Playlist to export: Update `NAME` to the name of one of the playlists you added as a Djay Pro playlist.
     3. Include Apply command to append Apple Music `--apply` or 
     4. Include No Overwrite command to only update blank BPM and Comment fields `--no-overwrite`
 
