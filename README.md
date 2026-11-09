@@ -98,9 +98,9 @@ Watch as the Apple Music playlist is automagically updated.
 
 🔥 Updating a thousand songs takes less than 5 minutes.
 
-## Troubleshooting
+# Troubleshooting
 
-### Apple Music Collaborative Playlists and NOTFOUND Tracks
+## Apple Music Collaborative Playlists and NOTFOUND Tracks
 
 Apple Music’s Collaborative Playlists can cause problems with track matching.
 
@@ -108,7 +108,7 @@ Although collaborative playlists appear in Apple Music and can be accessed throu
 
 This can result in a large number of NOTFOUND tracks, even when the track titles, artists, and albums match correctly.
 
-#### Workaround:
+### Workaround:
 
 1. Create a new, standard (non-collaborative) playlist in Apple Music.
 2. Open the collaborative playlist and select all tracks.
